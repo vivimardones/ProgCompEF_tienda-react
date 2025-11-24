@@ -1,70 +1,83 @@
-# Getting Started with Create React App
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+# Proyecto React - Actividad 1
+**Asignatura:** Programación de Componentes  
+**Objetivo:** Crear una aplicación React con lista de productos, comunicación entre componentes y gestión de carrito.
+- ---
+## Estructura del Proyecto
+```
+src/
+	components/
+	    ProductList.js <!- Componente padre ->
+	    ProductItem.js <!- Componente hijo ->
+	    CartSummary.js <!- Resumen del carrito ->
+	data/
+	    products.js <!- Datos iniciales de productos ->
+	App.js <!- Puntos de integracion ->
+	index.css <!- Estilos básicos ->
+```
+---
+## Ejercicio 1
+### 1. Crear un proyecto React
+- Se creó el proyecto con:
+  ```bash
+  npx create-react-app tienda-react
+  ```
+- Carpeta raíz: `tienda-react/`
+### 2. Diseñar componentes
+- **Padre (ProductList.js):**
+- Contiene la lista de productos.
+- Mantiene el estado del carrito.
+- Define métodos `addToCart`, `removeFromCart`, `clearCart`.
+- **Hijo (ProductItem.js):**
+- Renderiza cada producto individual.
+- Muestra nombre, precio y botón de agregar.
+- Comunica acciones al padre mediante `props`.
+- **CartSummary.js:**
+- Muestra el contenido del carrito.
+- Permite quitar productos o vaciar el carrito.
+### 3. Implementar `map()` para listar productos
+- En **ProductList.js**:
+```js
+{products.map((product) => (
+  <ProductItem
+    key={product.id}
+    product={product}
+    onAdd={this.addToCart}
+  />
+))}
+```
+- Se recorre el array `products` definido en `src/data/products.js`.
+### 4. Comunicación padre-hijo e hijo-padre
+- **Padre → Hijo:**  
+	Props `product` y callback `onAdd` enviados desde `ProductList` a `ProductItem`.
+- **Hijo → Padre:**  
+	En `ProductItem`, el botón ejecuta
+```JS
+<button onClick={() => onAdd(product)}>Agregar al carrito</button>
+```
+- Esto llama al método del padre para actualizar el carrito.
+### 5. Actualizar el carrito con `state` y `this.setState({})`
+- En **ProductList.js**:
+```JS
+this.setState((prevState) => {
+  const exists = prevState.cart.find((p) => p.id === product.id);
+  if (exists) {
+    return {
+      cart: prevState.cart.map((p) =>
+        p.id === product.id ? { ...p, qty: p.qty + 1 } : p
+      ),
+    };
+  }
+  return {
+    cart: [...prevState.cart, { ...product, qty: 1 }],
+  };
+});
+```
+- Se maneja el estado del carrito con **this.state.cart**.
+---
+### Estilos
+• 	Archivo: index.css
+• 	Se definieron estilos básicos para:
+• 	Contenedor principal ()
+• 	Grid de productos ()
+• 	Tarjetas ()
+• 	Botones
