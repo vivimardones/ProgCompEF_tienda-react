@@ -1,12 +1,14 @@
 import React from 'react';
-import ProductList from './components/ProductList';
+import UserForm from './components/UserForm';
 
 function App() {
   return (
-    <div>
-      <ProductList />
+    <div className="container">
+      <h1>Registro de Usuarios</h1>
+      <UserForm />
     </div>
   );
 }
 
 export default App;
+

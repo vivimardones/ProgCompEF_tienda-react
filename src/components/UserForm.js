@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import SimpleReactValidator from 'simple-react-validator';
-import { db } from '../firebase'; // Se Configura en la actividad 3
+import { db } from '../firebase'; // tu configuración en firebase.js
+import { collection, addDoc } from 'firebase/firestore';
 
 function UserForm() {
   const [form, setForm] = useState({ name: '', email: '' });
@@ -11,20 +12,21 @@ function UserForm() {
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validator.allValid()) {
-      // Guardar en Firestore
-      db.collection('users')
-        .add(form)
-        .then(() => {
-          alert('Usuario guardado en Firestore');
-          setForm({ name: '', email: '' });
-          validator.hideMessages();
-        })
-        .catch((error) => {
-          alert('Error al guardar: ' + error.message);
+      try {
+        // Guardar en Firestore con SDK v9
+        await addDoc(collection(db, 'users'), {
+          name: form.name,
+          email: form.email,
         });
+        alert('Usuario guardado en Firestore');
+        setForm({ name: '', email: '' });
+        validator.hideMessages();
+      } catch (error) {
+        alert('Error al guardar: ' + error.message);
+      }
     } else {
       validator.showMessages();
     }
