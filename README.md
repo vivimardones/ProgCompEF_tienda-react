@@ -150,3 +150,86 @@ En la **Actividad 2** se implementó:
 - Uso de `react-simple-validator` para reglas de entrada.
 - Conexión a Firebase con SDK modular v9.
 - Inserción de datos en Firestore dentro de la colección `users`.
+
+## Exportar proyecto Cordova a APK/AAB
+
+Este documento describe el flujo completo para **compilar, firmar y preparar** una aplicación Cordova en Android, generando tanto el **App Bundle (.aab)** como el **APK firmado** para pruebas locales.
+- ---
+### Requisitos previos
+- **Node.js** y **Cordova CLI** instalados
+- **Android Studio** con SDK configurado
+- Variables de entorno en Windows:
+  - `ANDROID_HOME` → `C:\Users\<usuario>\AppData\Local\Android\Sdk`
+  - `PATH` incluye:
+    - `%ANDROID_HOME%\platform-tools`
+    - `%ANDROID_HOME%\tools`
+    - `%ANDROID_HOME%\tools\bin`
+    - `%ANDROID_HOME%\build-tools\<versión>`
+---
+### Pasos de compilación
+
+### 1. Generar build en modo release
+```bash
+cordova build android --release
+```
+Resultado:
+
+- `.aab` → `platforms/android/app/build/outputs/bundle/release/app-release.aab`
+- (Opcional) `.apk` → `platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk`  
+    _(solo si Gradle está configurado para generar APKs)_
+
+2. Firmar el artefacto
+
+Firmar `.aab` con `jarsigner`
+
+```bash
+jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+-keystore my-release-key.keystore \
+platforms/android/app/build/outputs/bundle/release/app-release.aab \
+<alias-del-keystore>
+
+```
+Firmar `.apk` con `apksigner`
+
+```bash
+apksigner sign --ks my-release-key.keystore --ks-key-alias <alias-del-keystore> \
+--out app-release-signed.apk app-release-unsigned.apk
+```
+--- 
+### 3. Verificar firma
+```bash 
+jarsigner -verify platforms/android/app/build/outputs/bundle/release/app-release.aab
+apksigner verify app-release-signed.apk
+```
+
+### 4. Instalar en dispositivo Android
+Con el celular conectado y **Depuración USB** activada:
+```bash
+adb install app-release-signed.apk
+```
+### Alternativa: Convertir `.aab` a `.apk` universal
+
+Si solo tienes `.aab`, usa **Bundletool**:
+```bash
+java -jar bundletool.jar build-apks \
+--bundle=platforms/android/app/build/outputs/bundle/release/app-release.aab \
+--output=app-release.apks \
+--ks=my-release-key.keystore \
+--ks-key-alias my-key-alias \
+--ks-pass=pass:pipemauri2 \
+--key-pass=pass:pipemauri2 \
+--mode=universal
+```
+Extraer e instalar:
+```
+unzip app-release.apks -d salida
+adb install salida/universal.apk
+```
+### Resultado final
+
+- `.aab` firmado → listo para publicar en Google Play.
+- `.apk` firmado → listo para instalar en dispositivo físico para pruebas.
+### Notas
+- El `.aab` es obligatorio para publicar en Google Play.
+- El `.apk` es útil para pruebas locales.
+- El alias del keystore debe coincidir con el definido al crear la clave (`keytool -list -v -keystore my-release-key.keystore`).
