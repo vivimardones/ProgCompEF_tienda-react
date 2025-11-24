@@ -151,6 +151,8 @@ En la **Actividad 2** se implementó:
 - Conexión a Firebase con SDK modular v9.
 - Inserción de datos en Firestore dentro de la colección `users`.
 
+# Ejercicio 3
+
 ## Exportar proyecto Cordova a APK/AAB
 
 Este documento describe el flujo completo para **compilar, firmar y preparar** una aplicación Cordova en Android, generando tanto el **App Bundle (.aab)** como el **APK firmado** para pruebas locales.
