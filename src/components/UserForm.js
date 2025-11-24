@@ -1,67 +1,105 @@
+// src/components/UserForm.js
 import React, { useState } from "react";
-import SimpleReactValidator from "simple-react-validator";
-import { db } from "../firebase"; // tu configuración en firebase.js
+import { db, storage } from "../firebase";
 import { collection, addDoc } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 function UserForm() {
   const [form, setForm] = useState({ name: "", email: "" });
-  const [validator] = useState(new SimpleReactValidator());
+  const [file, setFile] = useState(null);
+  const [previewURL, setPreviewURL] = useState(""); // 👈 para mostrar la imagen subida
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validator.allValid()) {
-      try {
-        // Guardar en Firestore con SDK v9
-        await addDoc(collection(db, "users"), {
-          name: form.name,
-          email: form.email,
+
+    try {
+      let fileURL = "";
+
+      if (file) {
+        const storageRef = ref(storage, "uploads/" + file.name);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              console.log("Progreso: " + progress + "%");
+            },
+            (error) => console.error("Error al subir:", error),
+            async () => {
+              fileURL = await getDownloadURL(uploadTask.snapshot.ref);
+              setPreviewURL(fileURL); // 👈 mostrar imagen subida
+              resolve();
+            }
+          );
         });
-        alert("Usuario guardado en Firestore");
-        setForm({ name: "", email: "" });
-        validator.hideMessages();
-      } catch (error) {
-        alert("Error al guardar: " + error.message);
       }
-    } else {
-      validator.showMessages();
+
+      // Guardar datos en Firestore
+      await addDoc(collection(db, "users"), {
+        name: form.name,
+        email: form.email,
+        fileURL: fileURL, // 👈 guardamos la URL del archivo
+      });
+
+      alert("Datos guardados con éxito");
+      setForm({ name: "", email: "" });
+      setFile(null);
+    } catch (error) {
+      alert("Error al guardar: " + error.message);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-3 border rounded bg-light">
-      <div className="mb-3">
-        <label className="form-label">Nombre:</label>
-        <input
-          type="text"
-          name="name"
-          className="form-control"
-          value={form.name}
-          onChange={handleChange}
-        />
-        {validator.message("name", form.name, "required|alpha")}
-      </div>
+    <div className="container mt-4">
+      <h2>Formulario con Storage</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-3">
+          <label>Nombre:</label>
+          <input
+            type="text"
+            name="name"
+            className="form-control"
+            value={form.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label>Email:</label>
+          <input
+            type="email"
+            name="email"
+            className="form-control"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <label>Archivo:</label>
+          <input type="file" className="form-control" onChange={handleFileChange} />
+        </div>
+        <button type="submit" className="btn btn-primary">Guardar</button>
+      </form>
 
-      <div className="mb-3">
-        <label className="form-label">Email:</label>
-        <input
-          type="email"
-          name="email"
-          className="form-control"
-          value={form.email}
-          onChange={handleChange}
-        />
-        {validator.message("email", form.email, "required|email")}
-      </div>
-
-      <button type="submit" className="btn btn-primary">
-        Guardar
-      </button>
-    </form>
+      {/* Mostrar imagen subida */}
+      {previewURL && (
+        <div className="mt-4">
+          <h5>Archivo subido:</h5>
+          <img src={previewURL} alt="Archivo subido" style={{ maxWidth: "300px" }} />
+        </div>
+      )}
+    </div>
   );
 }
 
